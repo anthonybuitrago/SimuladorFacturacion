@@ -1,0 +1,22 @@
+## Visual Studio y .NET
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.pidb
+*.booproj
+
+## Sistema Operativo
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+## Logs y Temporales
+*.log
+*.tmp
+*.temp

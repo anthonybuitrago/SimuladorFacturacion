@@ -1,0 +1,334 @@
+<Window x:Class="SimuladorFacturacion.WPF.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:SimuladorFacturacion.WPF.ViewModels"
+        mc:Ignorable="d"
+        Title="Simulador de Descuentos y Facturación Rápida (WPF - MVVM)" 
+        Height="640" Width="920"
+        WindowStartupLocation="CenterScreen"
+        Background="#F8F9FA"
+        FontFamily="Segoe UI"
+        FontSize="13">
+
+    <!-- Instanciación de DataContext en XAML para soporte en tiempo de diseño -->
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <!-- Estilo Tarjeta Blanca con Borde Redondeado -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+
+        <!-- Estilo Moderno para TextBox (Con Borde Visible, Foco y Alerta de Error) -->
+        <Style x:Key="ModernTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Background" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#D1D5DB" />
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6">
+                            <ScrollViewer x:Name="PART_ContentHost" Focusable="false" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#9CA3AF" />
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#0078D4" />
+                                <Setter TargetName="border" Property="BorderThickness" Value="2" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding TieneError}" Value="True">
+                    <Setter Property="BorderBrush" Value="#DC2626" />
+                    <Setter Property="BorderThickness" Value="2" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo Botón Principal Azul -->
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D4" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Height" Value="38" />
+            <Setter Property="Padding" Value="20,0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#106EBE" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="#E5E7EB" />
+                                <Setter Property="Foreground" Value="#9CA3AF" />
+                                <Setter Property="Cursor" Value="Arrow" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" /> <!-- Panel Superior: Entrada y Resumen -->
+            <RowDefinition Height="*" />    <!-- Panel Inferior: Tabla DataGrid -->
+            <RowDefinition Height="Auto" /> <!-- Barra de Estado Inferior -->
+        </Grid.RowDefinitions>
+
+        <!-- 1. PANEL SUPERIOR: PARÁMETROS DE FACTURACIÓN -->
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+            <StackPanel>
+                <TextBlock Text="1. Parámetros de Facturación" 
+                           FontSize="15" FontWeight="Bold" Foreground="#111827" Margin="0,0,0,14" />
+
+                <!-- Fila de Campos de Entrada -->
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="220" />
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="340" />
+                        <ColumnDefinition Width="20" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Campo Monto Base -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Monto Base ($):" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6" />
+                        <TextBox x:Name="TxtMontoBase"
+                                 Text="{Binding MontoBaseInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{StaticResource ModernTextBoxStyle}"
+                                 Focusable="True" />
+                        <!-- Mensaje de Error Ergonómico -->
+                        <TextBlock Text="{Binding MensajeError}" 
+                                   Foreground="#DC2626" FontSize="11" FontWeight="Medium" 
+                                   Margin="0,4,0,0" TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <!-- Campo Tipo de Cliente (ComboBox) -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Tipo de Cliente (Estrategia OCP):" FontWeight="SemiBold" Foreground="#374151" Margin="0,0,0,6" />
+                        <ComboBox ItemsSource="{Binding TiposClientes}"
+                                  SelectedItem="{Binding TipoSeleccionado}"
+                                  DisplayMemberPath="NombreVisible"
+                                  Height="38" VerticalContentAlignment="Center" Padding="10,0" />
+                        <TextBlock Text="{Binding TipoSeleccionado.Descripcion}" 
+                                   Foreground="#6B7280" FontSize="11" Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <!-- Botón Facturar (Enter dispara IsDefault) -->
+                    <StackPanel Grid.Column="4" VerticalAlignment="Top" Margin="0,24,0,0">
+                        <Button Content="⚡ Calcular y Facturar"
+                                Command="{Binding FacturarCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                IsDefault="True" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Franja de Resumen Dinámico en Vivo (Distribuida idéntica al Boceto) -->
+                <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="16,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="1*" />
+                            <ColumnDefinition Width="1*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Subtotal -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left">
+                            <TextBlock Text="Subtotal: " Foreground="#4B5563" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding SubtotalPrevio}" Foreground="#111827" FontWeight="Bold" />
+                        </StackPanel>
+
+                        <!-- Ahorro Aplicado -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="Ahorro Aplicado: " Foreground="#4B5563" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding AhorroPrevio}" Foreground="#059669" FontWeight="Bold" />
+                        </StackPanel>
+
+                        <!-- Total a Pagar -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="Total a Pagar: " Foreground="#4B5563" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding TotalPrevio}" Foreground="#1D4ED8" FontWeight="Bold" FontSize="14" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- 2. PANEL INFERIOR: HISTORIAL DE FACTURAS -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Padding="14">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="2. Historial de Facturas Emitidas (ObservableCollection)" 
+                           FontSize="15" FontWeight="Bold" Foreground="#111827" Margin="4,0,0,12" />
+
+                <!-- Tabla DataGrid de Facturas con Alineaciones Contables -->
+                <DataGrid Grid.Row="1" 
+                          ItemsSource="{Binding Facturas}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          GridLinesVisibility="Horizontal"
+                          HorizontalGridLinesBrush="#E5E7EB"
+                          HeadersVisibility="Column"
+                          Background="Transparent"
+                          BorderThickness="0"
+                          RowHeight="36">
+
+                    <DataGrid.Resources>
+                        <!-- Estilo Encabezados DataGrid -->
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="#F3F4F6" />
+                            <Setter Property="Foreground" Value="#374151" />
+                            <Setter Property="FontWeight" Value="SemiBold" />
+                            <Setter Property="FontSize" Value="11" />
+                            <Setter Property="Padding" Value="14,8" />
+                            <Setter Property="BorderThickness" Value="0,0,0,1" />
+                            <Setter Property="BorderBrush" Value="#E5E7EB" />
+                        </Style>
+
+                        <!-- Estilo Celdas DataGrid -->
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="Padding" Value="14,4" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="DataGridCell">
+                                        <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGrid.Resources>
+
+                    <DataGrid.Columns>
+                        <!-- ID Perfectamente Centrado (#001) en Cabecera y Celda -->
+                        <DataGridTemplateColumn Width="75">
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="ID" HorizontalAlignment="Center" TextAlignment="Center" FontWeight="SemiBold" Foreground="#374151" FontSize="11" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding IdFormateado}" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"
+                                               TextAlignment="Center" 
+                                               FontWeight="Bold" 
+                                               Foreground="#111827" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Fecha (YYYY-MM-DD HH:mm) -->
+                        <DataGridTextColumn Header="FECHA Y HORA" Binding="{Binding FechaFormateada}" Width="160">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="#4B5563" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Tipo de Cliente -->
+                        <DataGridTextColumn Header="TIPO DE CLIENTE" Binding="{Binding TipoCliente}" Width="190">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="Medium" />
+                                    <Setter Property="Foreground" Value="#374151" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Monto Base (Alineado a la derecha) -->
+                        <DataGridTextColumn Header="MONTO BASE" Binding="{Binding MontoBaseFormateado}" Width="130">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                    <Setter Property="Foreground" Value="#374151" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Descuento (Alineado a la derecha en Verde con -$ si aplica) -->
+                        <DataGridTextColumn Header="DESCUENTO" Binding="{Binding MontoDescuentoFormateado}" Width="130">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                    <Setter Property="Foreground" Value="#059669" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Total Final (Alineado a la derecha en Azul Negrita) -->
+                        <DataGridTextColumn Header="TOTAL FINAL" Binding="{Binding MontoTotalFormateado}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="HorizontalAlignment" Value="Right" />
+                                    <Setter Property="Foreground" Value="#1D4ED8" />
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- 3. BARRA DE ESTADO INFERIOR (Distribuida a ambos extremos como el Boceto) -->
+        <Grid Grid.Row="2" Margin="4,2,4,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Izquierda: Total facturas emitidas -->
+            <TextBlock Grid.Column="0" 
+                       Text="{Binding TotalFacturasTexto}" 
+                       Foreground="#4B5563" FontSize="12" FontWeight="Normal" />
+
+            <!-- Derecha: Total Acumulado -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <TextBlock Text="Total Acumulado: " Foreground="#4B5563" FontSize="12" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding TotalAcumuladoTexto}" Foreground="#111827" FontSize="12" FontWeight="Bold" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
