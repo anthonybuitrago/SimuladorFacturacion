@@ -10,4 +10,9 @@
     <AssemblyName>SimuladorFacturacion.WPF</AssemblyName>
   </PropertyGroup>
 
+  <ItemGroup>
+    <!-- Paquete oficial de Microsoft para MVVM moderno con Source Generators -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
 </Project>

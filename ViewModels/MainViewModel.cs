@@ -1,40 +1,55 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SimuladorFacturacion.WPF.Core.Interfaces;
 using SimuladorFacturacion.WPF.Core.Services;
 using SimuladorFacturacion.WPF.Core.Strategies;
 using SimuladorFacturacion.WPF.Models;
-using SimuladorFacturacion.WPF.ViewModels.Common;
 
 namespace SimuladorFacturacion.WPF.ViewModels;
 
 /// <summary>
-/// ViewModel principal de la aplicación.
-/// Orquesta el estado de la vista, validaciones en tiempo real y comandos de usuario.
-/// Cumple con DIP (Dependency Inversion): Recibe sus dependencias abstractas por constructor.
+/// ViewModel principal utilizando CommunityToolkit.Mvvm oficial de Microsoft.
+/// Utiliza Source Generators ([ObservableProperty], [RelayCommand]) para eliminar el código repetitivo.
+/// Cumple con DIP (Dependency Inversion): Recibe dependencias por constructor.
 /// </summary>
-public class MainViewModel : ViewModelBase
+public partial class MainViewModel : ObservableObject
 {
     private readonly IProcesadorFacturaService _procesador;
     private readonly IRepositorioFacturas _repositorio;
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FacturarCommand))]
     private string _montoBaseInput = string.Empty;
-    private string _mensajeError = string.Empty;
-    private bool _tieneError;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(FacturarCommand))]
     private OpcionCliente? _tipoSeleccionado;
 
+    [ObservableProperty]
+    private string _mensajeError = string.Empty;
+
+    [ObservableProperty]
+    private bool _tieneError;
+
+    [ObservableProperty]
     private string _subtotalPrevio = "$ 0.00";
+
+    [ObservableProperty]
     private string _ahorroPrevio = "$ 0.00 (0%)";
+
+    [ObservableProperty]
     private string _totalPrevio = "$ 0.00";
 
+    [ObservableProperty]
     private string _totalFacturasTexto = "Total facturas emitidas: 0";
+
+    [ObservableProperty]
     private string _totalAcumuladoTexto = "$ 0.00";
 
     public ObservableCollection<OpcionCliente> TiposClientes { get; }
     public ObservableCollection<Factura> Facturas => _repositorio.ObtenerFacturas();
-
-    public ICommand FacturarCommand { get; }
 
     /// <summary>
     /// Constructor por defecto (para XAML / diseñador).
@@ -63,7 +78,7 @@ public class MainViewModel : ViewModelBase
         _procesador = procesador ?? throw new ArgumentNullException(nameof(procesador));
         _repositorio = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
 
-        // Inicializamos las opciones de clientes con los nombres idénticos al boceto
+        // Inicializamos las opciones de clientes
         TiposClientes = new ObservableCollection<OpcionCliente>
         {
             new OpcionCliente
@@ -87,76 +102,17 @@ public class MainViewModel : ViewModelBase
         };
 
         _tipoSeleccionado = TiposClientes[0];
-
-        FacturarCommand = new RelayCommand(EjecutarFacturar, PuedeFacturar);
     }
 
-    public string MontoBaseInput
+    // Métodos parciales generados por [ObservableProperty] de CommunityToolkit
+    partial void OnMontoBaseInputChanged(string value)
     {
-        get => _montoBaseInput;
-        set
-        {
-            if (SetProperty(ref _montoBaseInput, value))
-            {
-                ValidarYActualizarPrevisualizacion();
-                (FacturarCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            }
-        }
+        ValidarYActualizarPrevisualizacion();
     }
 
-    public OpcionCliente? TipoSeleccionado
+    partial void OnTipoSeleccionadoChanged(OpcionCliente? value)
     {
-        get => _tipoSeleccionado;
-        set
-        {
-            if (SetProperty(ref _tipoSeleccionado, value))
-            {
-                ValidarYActualizarPrevisualizacion();
-                (FacturarCommand as RelayCommand)?.RaiseCanExecuteChanged();
-            }
-        }
-    }
-
-    public string MensajeError
-    {
-        get => _mensajeError;
-        private set => SetProperty(ref _mensajeError, value);
-    }
-
-    public bool TieneError
-    {
-        get => _tieneError;
-        private set => SetProperty(ref _tieneError, value);
-    }
-
-    public string SubtotalPrevio
-    {
-        get => _subtotalPrevio;
-        private set => SetProperty(ref _subtotalPrevio, value);
-    }
-
-    public string AhorroPrevio
-    {
-        get => _ahorroPrevio;
-        private set => SetProperty(ref _ahorroPrevio, value);
-    }
-
-    public string TotalPrevio
-    {
-        get => _totalPrevio;
-        private set => SetProperty(ref _totalPrevio, value);
-    }
-
-    public string TotalFacturasTexto
-    {
-        get => _totalFacturasTexto;
-        private set => SetProperty(ref _totalFacturasTexto, value);
-    }
-
-    public string TotalAcumuladoTexto
-    {
-        get => _totalAcumuladoTexto;
-        private set => SetProperty(ref _totalAcumuladoTexto, value);
+        ValidarYActualizarPrevisualizacion();
     }
 
     private void ValidarYActualizarPrevisualizacion()
@@ -207,7 +163,11 @@ public class MainViewModel : ViewModelBase
         return decimal.TryParse(valorLimpio, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal monto) && monto > 0;
     }
 
-    private void EjecutarFacturar()
+    /// <summary>
+    /// Comando generado automáticamente como "FacturarCommand" por el Source Generator de CommunityToolkit.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(PuedeFacturar))]
+    private void Facturar()
     {
         if (!PuedeFacturar() || TipoSeleccionado == null) return;
 

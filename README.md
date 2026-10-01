@@ -38,10 +38,7 @@ Proyecto académico de **C# y .NET 8** desarrollado siguiendo rigurosamente el *
 │       ├── RepositorioFacturasMemoria.cs
 │       └── ProcesadorFacturaService.cs
 ├── 📁 ViewModels/
-│   ├── 📁 Common/
-│   │   ├── ViewModelBase.cs (INotifyPropertyChanged)
-│   │   └── RelayCommand.cs (ICommand)
-│   └── MainViewModel.cs
+│   └── MainViewModel.cs (Uso oficial de CommunityToolkit.Mvvm: [ObservableObject], [ObservableProperty], [RelayCommand])
 └── 📁 Views/
     ├── MainWindow.xaml (Diseño Windows 11 Fluent)
     └── MainWindow.xaml.cs (Code-Behind Limpio)
