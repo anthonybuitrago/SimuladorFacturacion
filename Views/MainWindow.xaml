@@ -10,12 +10,8 @@
         WindowStartupLocation="CenterScreen"
         Background="#F8F9FA"
         FontFamily="Segoe UI"
-        FontSize="13">
-
-    <!-- Instanciación de DataContext en XAML para soporte en tiempo de diseño -->
-    <Window.DataContext>
-        <vm:MainViewModel />
-    </Window.DataContext>
+        FontSize="13"
+        d:DataContext="{d:DesignInstance vm:MainViewModel}">
 
     <Window.Resources>
         <!-- Estilo Tarjeta Blanca con Borde Redondeado -->
@@ -237,7 +233,7 @@
                     </DataGrid.Resources>
 
                     <DataGrid.Columns>
-                        <!-- ID Perfectamente Centrado (#001) en Cabecera y Celda -->
+                        <!-- ID Perfectamente Centrado (#001) usando StringFormat sobre la propiedad numérica pura -->
                         <DataGridTemplateColumn Width="75">
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
@@ -246,7 +242,7 @@
                             </DataGridTemplateColumn.HeaderTemplate>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding IdFormateado}" 
+                                    <TextBlock Text="{Binding Id, StringFormat='#{0:D3}'}" 
                                                HorizontalAlignment="Center" 
                                                VerticalAlignment="Center"
                                                TextAlignment="Center" 
@@ -256,8 +252,8 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <!-- Fecha (YYYY-MM-DD HH:mm) -->
-                        <DataGridTextColumn Header="FECHA Y HORA" Binding="{Binding FechaFormateada}" Width="160">
+                        <!-- Fecha pura formateada con StringFormat en XAML -->
+                        <DataGridTextColumn Header="FECHA Y HORA" Binding="{Binding Fecha, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="160">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Foreground" Value="#4B5563" />
@@ -275,8 +271,8 @@
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <!-- Monto Base (Alineado a la derecha) -->
-                        <DataGridTextColumn Header="MONTO BASE" Binding="{Binding MontoBaseFormateado}" Width="130">
+                        <!-- Monto Base numérico puro formateado con StringFormat en XAML -->
+                        <DataGridTextColumn Header="MONTO BASE" Binding="{Binding MontoBase, StringFormat='{}{0:$ #,##0.00}'}" Width="130">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Right" />
@@ -285,19 +281,36 @@
                             </DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
 
-                        <!-- Descuento (Alineado a la derecha en Verde con -$ si aplica) -->
-                        <DataGridTextColumn Header="DESCUENTO" Binding="{Binding MontoDescuentoFormateado}" Width="130">
-                            <DataGridTextColumn.ElementStyle>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="HorizontalAlignment" Value="Right" />
-                                    <Setter Property="Foreground" Value="#059669" />
-                                    <Setter Property="FontWeight" Value="SemiBold" />
+                        <!-- Descuento numérico puro con signo condicional -->
+                        <DataGridTemplateColumn Header="DESCUENTO" Width="130">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource {x:Type DataGridColumnHeader}}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Right" />
                                 </Style>
-                            </DataGridTextColumn.ElementStyle>
-                        </DataGridTextColumn>
+                            </DataGridTemplateColumn.HeaderStyle>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <TextBlock Text="- " FontWeight="SemiBold" Foreground="#059669">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding MontoDescuento}" Value="0">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                        <TextBlock Text="{Binding MontoDescuento, StringFormat='{}{0:$ #,##0.00}'}" FontWeight="SemiBold" Foreground="#059669" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                        <!-- Total Final (Alineado a la derecha en Azul Negrita) -->
-                        <DataGridTextColumn Header="TOTAL FINAL" Binding="{Binding MontoTotalFormateado}" Width="*">
+                        <!-- Total Final numérico puro formateado con StringFormat en XAML -->
+                        <DataGridTextColumn Header="TOTAL FINAL" Binding="{Binding MontoTotal, StringFormat='{}{0:$ #,##0.00}'}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="HorizontalAlignment" Value="Right" />

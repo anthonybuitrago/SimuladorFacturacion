@@ -12,7 +12,7 @@ namespace SimuladorFacturacion.WPF.ViewModels;
 /// <summary>
 /// ViewModel principal utilizando CommunityToolkit.Mvvm oficial de Microsoft.
 /// Utiliza Source Generators ([ObservableProperty], [RelayCommand]) para eliminar el código repetitivo.
-/// Cumple con DIP (Dependency Inversion): Recibe dependencias por constructor.
+/// Cumple con DIP (Dependency Inversion): Admite inyección de dependencias por constructor.
 /// </summary>
 public partial class MainViewModel : ObservableObject
 {
@@ -52,34 +52,33 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<Factura> Facturas => _repositorio.ObtenerFacturas();
 
     /// <summary>
-    /// Constructor por defecto (para XAML / diseñador).
+    /// Constructor por defecto (ensambla las dependencias estándar de forma directa, limpia y legible).
     /// </summary>
-    public MainViewModel() : this(CrearServiciosPorDefecto())
-    {
-    }
-
-    private static (IProcesadorFacturaService procesador, IRepositorioFacturas repo) CrearServiciosPorDefecto()
+    public MainViewModel()
     {
         var repo = new RepositorioFacturasMemoria();
-        var procesador = new ProcesadorFacturaService(repo);
-        return (procesador, repo);
-    }
+        _repositorio = repo;
+        _procesador = new ProcesadorFacturaService(repo);
 
-    private MainViewModel((IProcesadorFacturaService procesador, IRepositorioFacturas repo) servicios)
-        : this(servicios.procesador, servicios.repo)
-    {
+        TiposClientes = InicializarTiposClientes();
+        _tipoSeleccionado = TiposClientes[0];
     }
 
     /// <summary>
-    /// Constructor con inyección de dependencias (Principio D / IoC).
+    /// Constructor con inyección de dependencias (Principio D / IoC / Pruebas Unitarias).
     /// </summary>
     public MainViewModel(IProcesadorFacturaService procesador, IRepositorioFacturas repositorio)
     {
         _procesador = procesador ?? throw new ArgumentNullException(nameof(procesador));
         _repositorio = repositorio ?? throw new ArgumentNullException(nameof(repositorio));
 
-        // Inicializamos las opciones de clientes
-        TiposClientes = new ObservableCollection<OpcionCliente>
+        TiposClientes = InicializarTiposClientes();
+        _tipoSeleccionado = TiposClientes[0];
+    }
+
+    private static ObservableCollection<OpcionCliente> InicializarTiposClientes()
+    {
+        return new ObservableCollection<OpcionCliente>
         {
             new OpcionCliente
             {
@@ -100,11 +99,9 @@ public partial class MainViewModel : ObservableObject
                 Estrategia = new DescuentoCorporativo()
             }
         };
-
-        _tipoSeleccionado = TiposClientes[0];
     }
 
-    // Métodos parciales generados por [ObservableProperty] de CommunityToolkit
+    // Métodos parciales disparados por [ObservableProperty]
     partial void OnMontoBaseInputChanged(string value)
     {
         ValidarYActualizarPrevisualizacion();
@@ -139,7 +136,7 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        // Si es válido, limpiamos error y calculamos vista previa en vivo
+        // Si es válido, calculamos vista previa en vivo
         MensajeError = string.Empty;
         TieneError = false;
 
@@ -163,9 +160,6 @@ public partial class MainViewModel : ObservableObject
         return decimal.TryParse(valorLimpio, NumberStyles.Number, CultureInfo.InvariantCulture, out decimal monto) && monto > 0;
     }
 
-    /// <summary>
-    /// Comando generado automáticamente como "FacturarCommand" por el Source Generator de CommunityToolkit.
-    /// </summary>
     [RelayCommand(CanExecute = nameof(PuedeFacturar))]
     private void Facturar()
     {
@@ -176,7 +170,7 @@ public partial class MainViewModel : ObservableObject
         {
             _procesador.CrearFactura(monto, TipoSeleccionado.Estrategia);
 
-            // Actualizamos la barra de estado inferior
+            // Actualizamos el pie acumulado
             ActualizarResumenAcumulado();
 
             // Limpiamos el campo para la próxima operación

@@ -2,7 +2,9 @@ namespace SimuladorFacturacion.WPF.Models;
 
 /// <summary>
 /// Modelo inmutable de datos que representa una Factura emitida.
-/// Cumple con SRP (Single Responsibility Principle): Solo almacena y transporta datos.
+/// Cumple con SRP (Single Responsibility Principle) y pureza de MVVM:
+/// Solo almacena datos puros del dominio (números y fechas).
+/// No contiene lógica de formateo de texto ni signos monetarios (estos se delegan a la vista XAML).
 /// </summary>
 public class Factura
 {
@@ -12,11 +14,4 @@ public class Factura
     public decimal MontoBase { get; set; }
     public decimal MontoDescuento { get; set; }
     public decimal MontoTotal { get; set; }
-
-    // Propiedades formateadas para coincidir exactamente con el boceto visual
-    public string IdFormateado => $"#{Id:D3}";
-    public string FechaFormateada => Fecha.ToString("yyyy-MM-dd HH:mm");
-    public string MontoBaseFormateado => $"$ {MontoBase:N2}";
-    public string MontoDescuentoFormateado => MontoDescuento > 0 ? $"- $ {MontoDescuento:N2}" : "$ 0.00";
-    public string MontoTotalFormateado => $"$ {MontoTotal:N2}";
 }
